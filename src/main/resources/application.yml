@@ -5,39 +5,6 @@ spring:
     name: kafka-s3-connector
   profiles:
     active: local
-    
-# Management/Actuator Configuration
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,metrics,info,prometheus,env,configprops
-      base-path: /actuator
-  endpoint:
-    health:
-      show-details: when-authorized
-      show-components: always
-    metrics:
-      enabled: true
-    prometheus:
-      enabled: true
-  metrics:
-    export:
-      prometheus:
-        enabled: true
-        step: PT1M
-    distribution:
-      percentiles-histogram:
-        http.server.requests: true
-        kafka.connector: true
-      percentiles:
-        http.server.requests: 0.50,0.90,0.95,0.99
-        kafka.connector: 0.50,0.90,0.95,0.99
-  health:
-    defaults:
-      enabled: true
-
-spring:      
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
@@ -79,7 +46,7 @@ connector:
           enable-schema-evolution: true
           checkpoint-interval: "10"
       processing:
-        batch-size: 1000
+        batch-size: 5
         flush-interval: 60
         max-retries: 3
     
@@ -97,30 +64,9 @@ connector:
           enable-vacuum: false
           enable-schema-evolution: true
       processing:
-        batch-size: 500
+        batch-size: 3
         flush-interval: 30
         max-retries: 5
-
-# Monitoring Configuration
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus
-      base-path: /actuator
-  endpoint:
-    health:
-      show-details: always
-    metrics:
-      enabled: true
-    prometheus:
-      enabled: true
-  server:
-    port: 8081
-  metrics:
-    export:
-      prometheus:
-        enabled: true
 
 # Logging Configuration
 logging:
@@ -141,3 +87,36 @@ server:
   port: 8080
   servlet:
     context-path: /
+
+# Management/Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,info,prometheus,env,configprops
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  server:
+    port: 8081
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        step: PT1M
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        kafka.connector: true
+      percentiles:
+        http.server.requests: 0.50,0.90,0.95,0.99
+        kafka.connector: 0.50,0.90,0.95,0.99
+  health:
+    defaults:
+      enabled: true

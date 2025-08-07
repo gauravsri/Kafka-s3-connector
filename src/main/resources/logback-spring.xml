@@ -37,7 +37,7 @@
     <!-- File Appender for application logs -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/kafka-s3-connector.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>logs/kafka-s3-connector.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
             <maxFileSize>100MB</maxFileSize>
             <maxHistory>30</maxHistory>
@@ -60,7 +60,7 @@
     <!-- Metrics Appender -->
     <appender name="METRICS" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/metrics.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>logs/metrics.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
             <maxFileSize>50MB</maxFileSize>
             <maxHistory>7</maxHistory>
@@ -80,7 +80,7 @@
     <!-- Performance Appender -->
     <appender name="PERFORMANCE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/performance.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>logs/performance.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
             <maxFileSize>50MB</maxFileSize>
             <maxHistory>7</maxHistory>
