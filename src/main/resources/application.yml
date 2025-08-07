@@ -1,0 +1,143 @@
+# Default configuration for local development
+# Application runs on host, connects to MinIO and RedPanda containers
+spring:
+  application:
+    name: kafka-s3-connector
+  profiles:
+    active: local
+    
+# Management/Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,info,prometheus,env,configprops
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        step: PT1M
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        kafka.connector: true
+      percentiles:
+        http.server.requests: 0.50,0.90,0.95,0.99
+        kafka.connector: 0.50,0.90,0.95,0.99
+  health:
+    defaults:
+      enabled: true
+
+spring:      
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: kafka-s3-connector
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      max-poll-interval-ms: 300000
+      session-timeout-ms: 30000
+      fetch-max-wait-ms: 500
+
+# S3 Configuration (MinIO container)
+aws:
+  s3:
+    endpoint: http://localhost:9000
+    region: us-east-1
+    path-style-access: true
+    access-key-id: minioadmin
+    secret-access-key: minioadmin
+
+# TODO: Add Delta Lake Configuration later
+# For now, using simple S3 storage
+
+# Multi-Topic Connector Configuration
+connector:
+  topics:
+    user-events:
+      kafka-topic: "user.events.v1"
+      schema-file: "schemas/user-events-schema.json"
+      destination:
+        bucket: "test-data-lake"
+        path: "events/user-events"
+        partition-columns: ["year", "month", "day", "event_type"]
+        table-name: "user_events"
+        delta-config:
+          enable-optimize: true
+          optimize-interval: 10
+          enable-schema-evolution: true
+          checkpoint-interval: "10"
+      processing:
+        batch-size: 1000
+        flush-interval: 60
+        max-retries: 3
+    
+    order-events:
+      kafka-topic: "orders.lifecycle.v2"
+      schema-file: "schemas/order-events-schema.json"
+      destination:
+        bucket: "test-data-lake"
+        path: "orders/order-events"
+        partition-columns: ["year", "month", "day", "order_status"]
+        table-name: "order_events"
+        delta-config:
+          enable-optimize: true
+          optimize-interval: 5
+          enable-vacuum: false
+          enable-schema-evolution: true
+      processing:
+        batch-size: 500
+        flush-interval: 30
+        max-retries: 5
+
+# Monitoring Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  server:
+    port: 8081
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.company.kafkaconnector: DEBUG
+    org.apache.kafka: WARN
+    org.apache.spark: WARN
+    io.delta: INFO
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{correlationId}] %logger{36} - %msg%n"
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level [%X{correlationId}] %logger{20} - %msg%n"
+  file:
+    name: logs/kafka-s3-connector.log
+
+# Server Configuration
+server:
+  port: 8080
+  servlet:
+    context-path: /

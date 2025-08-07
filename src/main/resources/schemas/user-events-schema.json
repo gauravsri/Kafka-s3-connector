@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "User Events Schema",
+  "description": "Schema for user interaction events",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Unique identifier for the user"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": ["click", "view", "signup", "login", "logout"],
+      "description": "Type of user event"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Event timestamp in ISO format"
+    },
+    "page_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL where the event occurred"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "User session identifier"
+    },
+    "properties": {
+      "type": "object",
+      "description": "Additional event properties",
+      "additionalProperties": true
+    }
+  },
+  "required": ["user_id", "event_type", "timestamp"],
+  "additionalProperties": false
+}

@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "Order Events Schema",
+  "description": "Schema for order lifecycle events",
+  "properties": {
+    "order_id": {
+      "type": "string",
+      "description": "Unique identifier for the order"
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Customer identifier"
+    },
+    "order_status": {
+      "type": "string",
+      "enum": ["created", "paid", "shipped", "delivered", "cancelled"],
+      "description": "Current order status"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Event timestamp in ISO format"
+    },
+    "total_amount": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Total order amount"
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$",
+      "description": "Currency code (ISO 4217)"
+    },
+    "items": {
+      "type": "array",
+      "description": "Order items",
+      "items": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "unit_price": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": ["product_id", "quantity", "unit_price"]
+      }
+    }
+  },
+  "required": ["order_id", "customer_id", "order_status", "timestamp"],
+  "additionalProperties": false
+}

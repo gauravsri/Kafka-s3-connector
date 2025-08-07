@@ -1,0 +1,111 @@
+# Production configuration with AWS S3 and Kafka/MSK
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:your-kafka-cluster.amazonaws.com:9092}
+    consumer:
+      security:
+        protocol: SASL_SSL
+      properties:
+        sasl:
+          mechanism: AWS_MSK_IAM
+          jaas:
+            config: software.amazon.msk.auth.iam.IAMLoginModule required;
+          client:
+            callback:
+              handler:
+                class: software.amazon.msk.auth.iam.IAMClientCallbackHandler
+
+# AWS S3 Configuration for Production
+aws:
+  region: ${AWS_REGION:us-west-2}
+  s3:
+    endpoint: # Use default AWS S3 endpoint
+    region: ${AWS_REGION:us-west-2}
+    path-style-access: false
+    access-key-id: ${AWS_ACCESS_KEY_ID:}
+    secret-access-key: ${AWS_SECRET_ACCESS_KEY:}
+
+# Delta Lake Configuration for Production
+delta:
+  spark:
+    hadoop:
+      fs:
+        s3a:
+          endpoint: # Use default AWS S3 endpoint
+          access-key: ${AWS_ACCESS_KEY_ID:}
+          secret-key: ${AWS_SECRET_ACCESS_KEY:}
+          path-style-access: false
+          impl: org.apache.hadoop.fs.s3a.S3AFileSystem
+          aws:
+            credentials:
+              provider: com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+
+# Production Topic Configuration
+connector:
+  topics:
+    user-events:
+      destination:
+        bucket: ${S3_BUCKET_ANALYTICS:prod-analytics-datalake}
+        path: "events/user-events"
+        delta-config:
+          enable-optimize: true
+          optimize-interval: 20  # Less frequent optimization in prod
+          enable-vacuum: true
+          vacuum-retention-hours: 168  # 7 days
+          enable-schema-evolution: false  # Stricter schema control in prod
+      processing:
+        batch-size: 5000  # Larger batches for better throughput
+        flush-interval: 120  # 2 minutes
+        max-retries: 5
+    
+    order-events:
+      destination:
+        bucket: ${S3_BUCKET_TRANSACTIONAL:prod-transactional-datalake}
+        path: "orders/order-events"
+        delta-config:
+          enable-optimize: true
+          optimize-interval: 15
+          enable-vacuum: true
+          vacuum-retention-hours: 72  # 3 days for faster cleanup
+          enable-schema-evolution: false
+      processing:
+        batch-size: 2000
+        flush-interval: 90
+        max-retries: 5
+
+# Production Monitoring
+management:
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        step: 30s
+
+# Production Logging
+logging:
+  level:
+    root: WARN
+    com.company.kafkaconnector: INFO
+    org.apache.kafka: ERROR
+    org.apache.spark: ERROR
+  file:
+    name: /app/logs/kafka-s3-connector.log
+  logback:
+    rollingpolicy:
+      max-file-size: 100MB
+      max-history: 7
+
+# JVM and Performance Tuning for Production
+server:
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 10
+    connection-timeout: 20000ms
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 1024
