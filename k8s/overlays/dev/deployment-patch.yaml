@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-s3-connector
+spec:
+  template:
+    spec:
+      containers:
+      - name: kafka-s3-connector
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "k8s,dev"
+        - name: LOGGING_LEVEL_ROOT
+          value: "DEBUG"
+        - name: LOGGING_LEVEL_COM_COMPANY_KAFKACONNECTOR
+          value: "DEBUG"

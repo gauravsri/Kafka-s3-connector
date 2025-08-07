@@ -1,0 +1,11 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: kafka-s3-connector-pdb
+  namespace: kafka-s3-connector
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kafka-s3-connector
+      app.kubernetes.io/component: connector

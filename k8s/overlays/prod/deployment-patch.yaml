@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-s3-connector
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 2
+  template:
+    spec:
+      containers:
+      - name: kafka-s3-connector
+        resources:
+          requests:
+            cpu: 1000m
+            memory: 2Gi
+          limits:
+            cpu: 4000m
+            memory: 8Gi
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "k8s,prod"
+        - name: JAVA_OPTS
+          value: |
+            -XX:+UseContainerSupport
+            -XX:MaxRAMPercentage=85.0
+            -XX:+UseG1GC
+            -XX:+UseStringDeduplication
+            -XX:G1HeapRegionSize=32m
+            -XX:G1MixedGCCountTarget=8
+            -XX:InitiatingHeapOccupancyPercent=35
+            -XX:+UnlockExperimentalVMOptions
+            -XX:+UseCGroupMemoryLimitForHeap
+            -XX:+AlwaysPreTouch
+            -XX:+UseTransparentHugePages
+            -Djava.security.egd=file:/dev/./urandom
+            -Dspring.profiles.active=k8s,prod
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: http
+          initialDelaySeconds: 90
+          periodSeconds: 30
+          timeoutSeconds: 15
+          failureThreshold: 5
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: http
+          initialDelaySeconds: 45
+          periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 3

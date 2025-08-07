@@ -1,0 +1,36 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: kafka-s3-connector-prod
+
+resources:
+  - ../../base
+
+namePrefix: prod-
+
+commonLabels:
+  app.kubernetes.io/instance: prod
+  environment: production
+
+replicas:
+  - name: kafka-s3-connector
+    count: 4
+
+images:
+  - name: kafka-s3-connector
+    newTag: "1.0.0"
+
+patchesStrategicMerge:
+  - deployment-patch.yaml
+  - configmap-patch.yaml
+
+configMapGenerator:
+  - name: kafka-s3-connector-env-config
+    literals:
+      - S3_BUCKET_NAME=production-data-lake
+      - KAFKA_BOOTSTRAP_SERVERS=kafka-cluster:9092
+      - CONNECT_GROUP_ID=prod-kafka-s3-connect-cluster
+      - BATCH_SIZE=5000
+      - FLUSH_INTERVAL=30
+      - S3_REGION=us-west-2

@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-s3-connector-service
+  namespace: kafka-s3-connector
+  labels:
+    app.kubernetes.io/name: kafka-s3-connector
+    app.kubernetes.io/component: service
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8081
+    targetPort: http
+    protocol: TCP
+  - name: connect
+    port: 8083
+    targetPort: connect
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: kafka-s3-connector
+    app.kubernetes.io/component: connector
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-s3-connector-headless
+  namespace: kafka-s3-connector
+  labels:
+    app.kubernetes.io/name: kafka-s3-connector
+    app.kubernetes.io/component: headless-service
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: http
+    port: 8081
+    targetPort: http
+    protocol: TCP
+  - name: connect
+    port: 8083
+    targetPort: connect
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: kafka-s3-connector
+    app.kubernetes.io/component: connector

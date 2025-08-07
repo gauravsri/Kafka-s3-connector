@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: kafka-s3-connector-base
+  labels:
+    app.kubernetes.io/name: kafka-s3-connector
+    app.kubernetes.io/version: "1.0.0"
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - deployment.yaml
+  - service.yaml
+  - servicemonitor.yaml
+  - poddisruptionbudget.yaml
+
+commonLabels:
+  app.kubernetes.io/name: kafka-s3-connector
+  app.kubernetes.io/component: connector
+  app.kubernetes.io/part-of: data-pipeline
+
+images:
+  - name: kafka-s3-connector
+    newTag: "1.0.0"

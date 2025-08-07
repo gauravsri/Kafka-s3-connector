@@ -1,0 +1,150 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-s3-connector
+  namespace: kafka-s3-connector
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kafka-s3-connector
+      app.kubernetes.io/component: connector
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kafka-s3-connector
+        app.kubernetes.io/component: connector
+        app.kubernetes.io/version: "1.0.0"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8081"
+        prometheus.io/path: "/actuator/prometheus"
+    spec:
+      serviceAccountName: kafka-s3-connector
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      containers:
+      - name: kafka-s3-connector
+        image: kafka-s3-connector:1.0.0
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8081
+          protocol: TCP
+        - name: connect
+          containerPort: 8083
+          protocol: TCP
+        env:
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka-service:9092"
+        - name: S3_REGION
+          value: "us-west-2"
+        - name: S3_BUCKET_NAME
+          value: "production-data-lake"
+        - name: CONNECT_GROUP_ID
+          value: "kafka-s3-connect-cluster"
+        - name: S3_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: kafka-s3-connector-secret
+              key: S3_ACCESS_KEY_ID
+        - name: S3_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: kafka-s3-connector-secret
+              key: S3_SECRET_ACCESS_KEY
+        envFrom:
+        - configMapRef:
+            name: kafka-s3-connector-jvm-config
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 2000m
+            memory: 4Gi
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: http
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /actuator/health/startup
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+          readOnly: true
+        - name: logs-volume
+          mountPath: /app/logs
+        - name: tmp-volume
+          mountPath: /tmp
+      volumes:
+      - name: config-volume
+        configMap:
+          name: kafka-s3-connector-config
+      - name: logs-volume
+        emptyDir:
+          sizeLimit: 2Gi
+      - name: tmp-volume
+        emptyDir:
+          sizeLimit: 1Gi
+      terminationGracePeriodSeconds: 60
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kafka-s3-connector
+  namespace: kafka-s3-connector
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kafka-s3-connector-role
+  namespace: kafka-s3-connector
+rules:
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kafka-s3-connector-rolebinding
+  namespace: kafka-s3-connector
+subjects:
+- kind: ServiceAccount
+  name: kafka-s3-connector
+  namespace: kafka-s3-connector
+roleRef:
+  kind: Role
+  name: kafka-s3-connector-role
+  apiGroup: rbac.authorization.k8s.io

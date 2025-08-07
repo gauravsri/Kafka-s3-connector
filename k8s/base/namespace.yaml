@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kafka-s3-connector
+  labels:
+    app.kubernetes.io/name: kafka-s3-connector
+    app.kubernetes.io/instance: base
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/component: namespace
+    app.kubernetes.io/part-of: data-pipeline
+    app.kubernetes.io/managed-by: kustomize

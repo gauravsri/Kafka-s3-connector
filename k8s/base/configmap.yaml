@@ -1,0 +1,91 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-s3-connector-config
+  namespace: kafka-s3-connector
+data:
+  application-k8s.yml: |
+    spring:
+      application:
+        name: kafka-s3-connector
+      profiles:
+        active: k8s
+
+    # Kafka Configuration
+    kafka:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka-service:9092}
+      consumer:
+        group-id: ${CONNECT_GROUP_ID:kafka-s3-connect-cluster}
+        auto-offset-reset: earliest
+        enable-auto-commit: false
+      producer:
+        key-serializer: org.apache.kafka.common.serialization.StringSerializer
+        value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+    # S3 Configuration
+    s3:
+      region: ${S3_REGION:us-west-2}
+      bucket-name: ${S3_BUCKET_NAME:production-data-lake}
+      path-style-access: false
+
+    # Kafka Connect Configuration
+    connect:
+      rest-port: 8083
+      group-id: ${CONNECT_GROUP_ID:kafka-s3-connect-cluster}
+      config-storage-topic: connect-configs
+      offset-storage-topic: connect-offsets
+      status-storage-topic: connect-status
+      config-storage-replication-factor: 3
+      offset-storage-replication-factor: 3
+      status-storage-replication-factor: 3
+
+    # Server Configuration
+    server:
+      port: 8081
+      tomcat:
+        threads:
+          max: 400
+          min-spare: 20
+
+    # Management and Actuator
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: health,info,metrics,prometheus,connector
+          base-path: /actuator
+      endpoint:
+        health:
+          show-details: when-authorized
+          show-components: always
+      metrics:
+        export:
+          prometheus:
+            enabled: true
+
+    # Logging Configuration
+    logging:
+      level:
+        root: INFO
+        com.company.kafkaconnector: INFO
+        org.apache.kafka: WARN
+      pattern:
+        console: "%d{HH:mm:ss.SSS} [%thread] %-5level [%X{correlationId:-}] %logger{36} - %msg%n"
+      file:
+        name: /app/logs/kafka-s3-connector.log
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-s3-connector-jvm-config
+  namespace: kafka-s3-connector
+data:
+  JAVA_OPTS: |
+    -XX:+UseContainerSupport
+    -XX:MaxRAMPercentage=80.0
+    -XX:+UseG1GC
+    -XX:+UseStringDeduplication
+    -XX:G1HeapRegionSize=16m
+    -Djava.security.egd=file:/dev/./urandom
+    -Dspring.profiles.active=k8s
+    -Dspring.config.location=classpath:/,file:/app/config/

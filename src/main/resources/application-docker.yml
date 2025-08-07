@@ -1,0 +1,142 @@
+# Docker environment configuration for Kafka S3 Connector
+# Optimized for container deployment with environment variable overrides
+
+spring:
+  application:
+    name: kafka-s3-connector
+  profiles:
+    active: docker
+
+# Kafka Configuration for container environment
+kafka:
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:redpanda:29092}
+  consumer:
+    group-id: ${CONNECT_GROUP_ID:kafka-s3-connect-cluster}
+    auto-offset-reset: earliest
+    enable-auto-commit: false
+    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  producer:
+    key-serializer: org.apache.kafka.common.serialization.StringSerializer
+    value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+# S3 Configuration for MinIO in containers
+s3:
+  endpoint-url: ${S3_ENDPOINT_URL:http://minio:9000}
+  region: ${S3_REGION:us-east-1}
+  access-key-id: ${S3_ACCESS_KEY_ID:minioadmin}
+  secret-access-key: ${S3_SECRET_ACCESS_KEY:minioadmin}
+  bucket-name: ${S3_BUCKET_NAME:test-data-lake}
+  path-style-access: true
+
+# Kafka Connect Configuration
+connect:
+  rest-port: ${CONNECT_REST_PORT:8083}
+  group-id: ${CONNECT_GROUP_ID:kafka-s3-connect-cluster}
+  config-storage-topic: ${CONNECT_CONFIG_STORAGE_TOPIC:connect-configs}
+  offset-storage-topic: ${CONNECT_OFFSET_STORAGE_TOPIC:connect-offsets}
+  status-storage-topic: ${CONNECT_STATUS_STORAGE_TOPIC:connect-status}
+  config-storage-replication-factor: 1
+  offset-storage-replication-factor: 1
+  status-storage-replication-factor: 1
+
+# Connector Configuration
+connector:
+  topics:
+    user-events:
+      topic-name: user-events
+      schema-file: schemas/user-events-schema.json
+      destination:
+        bucket: ${S3_BUCKET_NAME:test-data-lake}
+        prefix: events/user
+        table-name: user_events
+        partition-columns: ["year", "month", "day"]
+      processing:
+        batch-size: 1000
+        flush-interval: 60
+        max-retries: 3
+    order-events:
+      topic-name: order-events
+      schema-file: schemas/order-events-schema.json
+      destination:
+        bucket: ${S3_BUCKET_NAME:test-data-lake}
+        prefix: events/order
+        table-name: orders
+        partition-columns: ["year", "month", "day"]
+      processing:
+        batch-size: 1000
+        flush-interval: 60
+        max-retries: 3
+
+# Server Configuration
+server:
+  port: 8081
+  servlet:
+    context-path: /
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 10
+
+# Management and Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,connector
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        "[http.server.requests]": true
+        "[kafka.connector.record.processing.duration]": true
+        "[kafka.connector.s3.write.duration]": true
+      percentiles:
+        "[http.server.requests]": 0.5, 0.95, 0.99
+        "[kafka.connector.record.processing.duration]": 0.5, 0.95, 0.99
+        "[kafka.connector.s3.write.duration]": 0.5, 0.95, 0.99
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.company.kafkaconnector: INFO
+    org.apache.kafka: WARN
+    org.springframework: WARN
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{correlationId:-}] %logger{36} - %msg%n"
+  file:
+    name: /app/logs/kafka-s3-connector.log
+  logback:
+    rollingpolicy:
+      max-file-size: 100MB
+      max-history: 30
+      total-size-cap: 3GB
+
+# Circuit Breaker Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      s3-write:
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+  retry:
+    instances:
+      s3-write:
+        max-attempts: 3
+        wait-duration: 2s
+        exponential-backoff-multiplier: 2

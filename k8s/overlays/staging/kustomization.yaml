@@ -1,0 +1,35 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: kafka-s3-connector-staging
+
+resources:
+  - ../../base
+
+namePrefix: staging-
+
+commonLabels:
+  app.kubernetes.io/instance: staging
+  environment: staging
+
+replicas:
+  - name: kafka-s3-connector
+    count: 2
+
+images:
+  - name: kafka-s3-connector
+    newTag: "1.0.0-rc"
+
+patchesStrategicMerge:
+  - deployment-patch.yaml
+
+configMapGenerator:
+  - name: kafka-s3-connector-env-config
+    literals:
+      - S3_BUCKET_NAME=staging-data-lake
+      - KAFKA_BOOTSTRAP_SERVERS=staging-kafka:9092
+      - CONNECT_GROUP_ID=staging-kafka-s3-connect-cluster
+      - BATCH_SIZE=2000
+      - FLUSH_INTERVAL=60
+      - S3_REGION=us-west-2
