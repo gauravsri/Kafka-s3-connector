@@ -103,6 +103,36 @@ public class DeltaWriterService {
             return DoubleType.DOUBLE;
         } else if (value instanceof Boolean) {
             return BooleanType.BOOLEAN;
+        } else if (value instanceof Map) {
+            // Handle nested objects (LinkedHashMap, HashMap, etc.)
+            Map<?, ?> map = (Map<?, ?>) value;
+            StructType structType = new StructType();
+            
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                String key = entry.getKey().toString();
+                Object entryValue = entry.getValue();
+                if (entryValue != null) {
+                    DataType entryDataType = getDataType(entryValue);
+                    structType = structType.add(key, entryDataType);
+                } else {
+                    // Handle null values as nullable strings
+                    structType = structType.add(key, StringType.STRING);
+                }
+            }
+            return structType;
+        } else if (value instanceof List) {
+            // Handle arrays
+            List<?> list = (List<?>) value;
+            if (!list.isEmpty()) {
+                DataType elementType = getDataType(list.get(0));
+                return new ArrayType(elementType, true); // nullable elements
+            } else {
+                // Empty array, default to string array
+                return new ArrayType(StringType.STRING, true);
+            }
+        } else if (value == null) {
+            // Handle null values as nullable strings
+            return StringType.STRING;
         } else {
             throw new UnsupportedOperationException("Unsupported data type: " + value.getClass().getName());
         }

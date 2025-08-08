@@ -18,11 +18,13 @@ import io.delta.kernel.data.Row;
 import io.delta.kernel.utils.DataFileStatus;
 import io.delta.kernel.DataWriteContext;
 import io.delta.kernel.utils.CloseableIterator;
+import io.delta.kernel.expressions.Literal;
 
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;

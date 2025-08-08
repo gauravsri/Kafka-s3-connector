@@ -1,14 +1,13 @@
-# Default configuration for local development
-# Application runs on host, connects to MinIO and RedPanda containers
+# Instance 2 Configuration - Port 8090
 spring:
   application:
-    name: kafka-s3-connector
+    name: kafka-s3-connector-instance2
   profiles:
-    active: local
+    active: instance2
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
-      group-id: kafka-s3-connector
+      group-id: kafka-s3-connector-instance2
       auto-offset-reset: earliest
       enable-auto-commit: false
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -35,16 +34,16 @@ connector:
       destination:
         bucket: "test-data-lake"
         path: "events/user-events"
-        partition-columns: []  # Disabled for testing
+        partition-columns: ["year", "month", "day", "event_type"]
         table-name: "user_events"
         delta-config:
           enable-optimize: true
-          optimize-interval: 10
+          optimize-interval: 5
           enable-schema-evolution: true
           checkpoint-interval: "10"
       processing:
-        batch-size: 5
-        flush-interval: 60
+        batch-size: 3
+        flush-interval: 30
         max-retries: 3
     
     order-events:
@@ -53,16 +52,16 @@ connector:
       destination:
         bucket: "test-data-lake"
         path: "orders/order-events"
-        partition-columns: []  # Disabled for testing
+        partition-columns: ["year", "month", "day", "order_status"]
         table-name: "order_events"
         delta-config:
           enable-optimize: true
-          optimize-interval: 5
+          optimize-interval: 3
           enable-vacuum: false
           enable-schema-evolution: true
       processing:
-        batch-size: 3
-        flush-interval: 30
+        batch-size: 2
+        flush-interval: 20
         max-retries: 5
 
 # Logging Configuration
@@ -75,13 +74,13 @@ logging:
     io.delta: INFO
   pattern:
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{correlationId}] %logger{36} - %msg%n"
-    console: "%d{HH:mm:ss.SSS} [%thread] %-5level [%X{correlationId}] %logger{20} - %msg%n"
+    console: "%d{HH:mm:ss.SSS} [INST2] %-5level [%X{correlationId}] %logger{20} - %msg%n"
   file:
-    name: logs/kafka-s3-connector.log
+    name: logs/kafka-s3-connector-instance2.log
 
 # Server Configuration
 server:
-  port: 8080
+  port: 8090
   servlet:
     context-path: /
 
@@ -101,7 +100,7 @@ management:
     prometheus:
       enabled: true
   server:
-    port: 8081
+    port: 8091
   metrics:
     export:
       prometheus:
