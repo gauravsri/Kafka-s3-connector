@@ -1,14 +1,14 @@
-# Default configuration for local development
-# Application runs on host, connects to MinIO and RedPanda containers
+# Kafka-S3-Delta Connector - Local Development Configuration
+# Streams data from Kafka topics to S3 as Delta Lake tables
 spring:
   application:
-    name: kafka-s3-connector
+    name: kafka-s3-delta-connector
   profiles:
     active: local
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
-      group-id: kafka-s3-connector
+      group-id: kafka-s3-delta-connector
       auto-offset-reset: earliest
       enable-auto-commit: false
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -17,7 +17,7 @@ spring:
       session-timeout-ms: 30000
       fetch-max-wait-ms: 500
 
-# S3 Configuration (MinIO container)
+# S3-Compatible Storage Configuration (MinIO for local development)
 aws:
   s3:
     endpoint: http://localhost:9000
@@ -26,42 +26,46 @@ aws:
     access-key-id: minioadmin
     secret-access-key: minioadmin
 
-# Multi-Topic Connector Configuration
+# Delta Lake Connector Configuration
 connector:
   topics:
+    # User Events -> Delta Lake Table
     user-events:
       kafka-topic: "user.events.v1"
       schema-file: "schemas/user-events-schema.json"
       destination:
-        bucket: "test-data-lake"
+        bucket: "data-lake"
         path: "events/user-events"
-        partition-columns: []  # Disabled for testing
+        partition-columns: ["year", "month", "day", "event_type"]  # Time-based partitioning
         table-name: "user_events"
         delta-config:
           enable-optimize: true
           optimize-interval: 10
           enable-schema-evolution: true
+          enable-vacuum: false
           checkpoint-interval: "10"
       processing:
-        batch-size: 5
+        batch-size: 1000
         flush-interval: 60
         max-retries: 3
     
+    # Order Events -> Delta Lake Table  
     order-events:
       kafka-topic: "orders.lifecycle.v2"
       schema-file: "schemas/order-events-schema.json"
       destination:
-        bucket: "test-data-lake"
-        path: "orders/order-events"
-        partition-columns: []  # Disabled for testing
+        bucket: "data-lake"
+        path: "orders/lifecycle-events"
+        partition-columns: ["year", "month", "day", "order_status"]  # Status-based partitioning
         table-name: "order_events"
         delta-config:
           enable-optimize: true
           optimize-interval: 5
-          enable-vacuum: false
+          enable-vacuum: true
           enable-schema-evolution: true
+          vacuum-retention-hours: 168  # 7 days
       processing:
-        batch-size: 3
+        batch-size: 500
         flush-interval: 30
         max-retries: 5
 

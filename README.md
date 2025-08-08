@@ -1,133 +1,167 @@
-# Kafka S3 Delta Lake Connector
+# Kafka-S3-Delta Lake Connector
 
-> **Enterprise-grade Kafka Connect S3 connector with horizontal scaling, comprehensive monitoring, and production-ready resilience patterns.**
+> **Production-ready Kafka connector that streams data to S3 as Delta Lake tables with schema evolution, ACID transactions, and advanced optimization.**
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/company/kafka-s3-connector/releases)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/gauravsri/Kafka-s3-connector/releases)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 [![Java](https://img.shields.io/badge/java-17+-orange.svg)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/spring%20boot-3.2-brightgreen.svg)](https://spring.io/projects/spring-boot)
-[![Kafka Connect](https://img.shields.io/badge/kafka%20connect-3.6-red.svg)](https://kafka.apache.org/documentation/#connect)
+[![Delta Lake](https://img.shields.io/badge/delta%20lake-4.0.0-blue.svg)](https://delta.io/)
 
 ## 🚀 Overview
 
-The Kafka S3 Delta Lake Connector is a production-ready, horizontally scalable solution that streams data from Apache Kafka topics to Amazon S3 in JSON Lines format with comprehensive data transformation and validation capabilities.
+The Kafka-S3-Delta Lake Connector is a high-performance, enterprise-grade solution that streams data from Apache Kafka topics directly to S3 as Delta Lake tables. Built with Spring Boot and Delta Kernel, it provides ACID transactions, schema evolution, time travel, and advanced optimization capabilities.
 
 ### ✨ Key Features
 
-- **🏗️ Enterprise Architecture**: Built with SOLID principles, design patterns (Factory, Strategy, Builder), and clean code practices
-- **📈 Horizontal Scaling**: Distributed Kafka Connect workers with automatic task distribution and failover
-- **🔍 Data Integrity**: Comprehensive schema validation, message transformation, and data verification
-- **📊 Observability**: Micrometer metrics, structured logging, Prometheus integration, and custom dashboards
-- **⚡ Resilience**: Circuit breaker patterns, exponential backoff retry, and Dead Letter Queue (DLQ)
-- **🐳 Cloud Native**: Docker containers, Kubernetes deployment with Kustomize, and multi-environment support
-- **🔐 Production Ready**: Security best practices, resource management, and comprehensive health checks
+- **🏗️ Delta Lake Integration**: Native Delta Lake tables with ACID transactions and schema evolution
+- **⚡ High Performance**: Optimized batch processing with configurable partitioning strategies
+- **🔄 Schema Evolution**: Automatic schema evolution with backward compatibility
+- **📊 Advanced Analytics**: Support for complex nested objects, arrays, and time-based partitioning  
+- **🔍 Data Quality**: JSON schema validation, data transformation, and integrity checks
+- **📈 Production Ready**: Circuit breakers, retry policies, monitoring, and observability
+- **🐳 Cloud Native**: Docker containers, Kubernetes deployment, and multi-environment support
+- **⚙️ Optimization**: Automatic table optimization, compaction, and vacuum operations
 
 ## 🏗️ Architecture
 
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────────┐
-│   Kafka Topics  │───▶│  Kafka Connect   │───▶│   Amazon S3         │
-│                 │    │   S3 Connector   │    │   (JSON Lines)      │
-│ • user-events   │    │                  │    │                     │
-│ • order-events  │    │ • Schema Valid.  │    │ ├── events/user/    │
-│ • custom-topic  │    │ • Transform      │    │ ├── events/order/   │
-└─────────────────┘    │ • Partition      │    │ └── custom/         │
-                       │ • S3 Write       │    └─────────────────────┘
-                       └──────────────────┘
-                               │
-                       ┌──────────────────┐
-                       │   Monitoring     │
-                       │ • Prometheus     │
-                       │ • Grafana        │
-                       │ • Logs           │
-                       └──────────────────┘
+```mermaid
+graph TB
+    A[Kafka Topics] --> B[Kafka-S3-Delta Connector]
+    B --> C[Schema Validation]
+    C --> D[Data Transformation] 
+    D --> E[Batch Processing]
+    E --> F[Delta Lake Writer]
+    F --> G[S3 Storage]
+    
+    G --> H[Delta Lake Tables]
+    H --> I[Parquet Files]
+    H --> J[Transaction Log]
+    H --> K[Checkpoints]
+    
+    L[Monitoring] --> B
+    M[Metrics] --> B
+    N[Health Checks] --> B
+    
+    subgraph "Delta Lake Features"
+        H
+        I
+        J
+        K
+        O[ACID Transactions]
+        P[Time Travel] 
+        Q[Schema Evolution]
+        R[Optimization]
+    end
 ```
 
 ### 🛠️ Technology Stack
 
-- **Core Framework**: Spring Boot 3.x with Spring Kafka
-- **Kafka Integration**: Apache Kafka Connect API
-- **Data Processing**: JSON schema validation with GitHub's json-schema-validator
-- **Storage**: Amazon S3 (MinIO for local development)
-- **Monitoring**: Micrometer + Prometheus + Grafana
-- **Containerization**: Docker with multi-stage builds
-- **Orchestration**: Kubernetes with Kustomize
-- **Build Tool**: Apache Maven 3.9+
-- **Java Version**: OpenJDK 17+
+| Component | Technology | Version |
+|-----------|------------|---------|
+| **Runtime** | Spring Boot | 3.2+ |
+| **Delta Engine** | Delta Kernel | 4.0.0 |
+| **Storage** | Apache Hadoop S3A | 3.3.6 |
+| **Messaging** | Apache Kafka | 3.6+ |
+| **Data Format** | Apache Parquet | Latest |
+| **Schema** | JSON Schema Validator | Latest |
+| **Monitoring** | Micrometer + Prometheus | Latest |
+| **Build** | Apache Maven | 3.9+ |
+| **Java** | OpenJDK | 17+ |
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Java 17+
-- Apache Maven 3.9+
-- Docker and Docker Compose
-- Running Kafka cluster (or use provided RedPanda container)
-- S3-compatible storage (or use provided MinIO container)
+- **Java 17+** with JAVA_HOME configured
+- **Apache Maven 3.9+** for building
+- **Docker & Docker Compose** for local infrastructure
+- **S3-compatible storage** (AWS S3 or MinIO for local development)
+- **Apache Kafka** (or RedPanda for local development)
 
-### Local Development Setup
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/company/kafka-s3-connector.git
-   cd kafka-s3-connector
-   ```
-
-2. **Start infrastructure containers**
-   ```bash
-   # Start RedPanda (Kafka) and MinIO (S3)
-   docker-compose up -d redpanda minio minio-setup
-   
-   # Verify services are running
-   docker-compose ps
-   ```
-
-3. **Build the application**
-   ```bash
-   mvn clean package -DskipTests
-   ```
-
-4. **Run the connector locally**
-   ```bash
-   # Single instance
-   mvn spring-boot:run
-   
-   # Or with specific profile
-   mvn spring-boot:run -Dspring-boot.run.profiles=local
-   ```
-
-5. **Access the services**
-   - Connector REST API: http://localhost:8083
-   - Actuator endpoints: http://localhost:8081/actuator
-   - MinIO Console: http://localhost:9001 (minioadmin/minioadmin)
-
-### Docker Deployment
+### 1. Local Development Setup
 
 ```bash
-# Build and run with Docker Compose
-docker-compose up --build
+# Clone the repository
+git clone https://github.com/gauravsri/Kafka-s3-connector.git
+cd Kafka-s3-connector
 
-# Scale to multiple workers
-docker-compose --profile scaling up --build
+# Start local infrastructure (RedPanda + MinIO)
+docker-compose up -d
 
-# With monitoring
-docker-compose --profile monitoring up --build
+# Verify services are running
+docker-compose ps
 ```
 
-### Kubernetes Deployment
+### 2. Build and Run
 
 ```bash
-# Development environment
-kubectl apply -k k8s/overlays/dev
+# Build the connector
+mvn clean package -DskipTests
 
-# Staging environment
-kubectl apply -k k8s/overlays/staging
+# Run locally
+java -jar target/kafka-s3-connector-1.0.0-SNAPSHOT.jar
 
-# Production environment
-kubectl apply -k k8s/overlays/prod
+# Or with Maven
+mvn spring-boot:run
+```
 
-# Check deployment status
-kubectl get pods -n kafka-s3-connector
+### 3. Verify Setup
+
+```bash
+# Check connector health
+curl http://localhost:8081/actuator/health
+
+# View metrics
+curl http://localhost:8081/actuator/metrics
+
+# Access MinIO console
+open http://localhost:9001  # minioadmin/minioadmin
+```
+
+### 4. Test with Sample Data
+
+```bash
+# Publish test user event
+echo '{
+  "user_id": "user123",
+  "event_type": "view",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "page_url": "https://example.com/product/1",
+  "session_id": "session456",
+  "properties": {
+    "category": "electronics",
+    "price": 99.99,
+    "metadata": {"campaign": "summer_sale"}
+  }
+}' | docker exec -i $(docker-compose ps -q redpanda) rpk topic produce user.events.v1
+
+# Publish test order event  
+echo '{
+  "order_id": "order789", 
+  "customer_id": "customer123",
+  "order_status": "created",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "total_amount": 299.99,
+  "currency": "USD",
+  "items": [
+    {
+      "product_id": "prod1",
+      "quantity": 2, 
+      "unit_price": 149.99
+    }
+  ]
+}' | docker exec -i $(docker-compose ps -q redpanda) rpk topic produce orders.lifecycle.v2
+```
+
+### 5. Verify Delta Lake Tables
+
+```bash
+# List created tables in S3
+docker exec minio mc ls minio/data-lake/ --recursive
+
+# View Delta transaction log
+docker exec minio mc cat minio/data-lake/events/user-events/_delta_log/00000000000000000000.json
 ```
 
 ## 📋 Configuration
@@ -136,230 +170,327 @@ kubectl get pods -n kafka-s3-connector
 
 | Variable | Description | Default | Example |
 |----------|-------------|---------|---------|
-| `KAFKA_BOOTSTRAP_SERVERS` | Kafka broker endpoints | `localhost:9092` | `kafka-cluster:9092` |
-| `S3_BUCKET_NAME` | Target S3 bucket | `test-data-lake` | `production-data-lake` |
-| `S3_REGION` | AWS S3 region | `us-east-1` | `us-west-2` |
-| `S3_ENDPOINT_URL` | S3 endpoint (MinIO) | - | `http://minio:9000` |
-| `CONNECT_GROUP_ID` | Kafka Connect cluster ID | `kafka-s3-connect-cluster` | `prod-connect-cluster` |
-| `BATCH_SIZE` | Records per batch | `1000` | `5000` |
-| `FLUSH_INTERVAL` | Flush interval (seconds) | `60` | `30` |
+| `KAFKA_BOOTSTRAP_SERVERS` | Kafka brokers | `localhost:9092` | `kafka1:9092,kafka2:9092` |
+| `AWS_S3_ENDPOINT` | S3 endpoint URL | `http://localhost:9000` | `https://s3.amazonaws.com` |
+| `AWS_S3_BUCKET` | Target bucket | `data-lake` | `production-data-lake` |
+| `AWS_ACCESS_KEY_ID` | AWS access key | `minioadmin` | `AKIA...` |
+| `AWS_SECRET_ACCESS_KEY` | AWS secret key | `minioadmin` | `...` |
+| `AWS_REGION` | AWS region | `us-east-1` | `us-west-2` |
 
 ### Topic Configuration
 
-Configure topics in `application.yml`:
+Configure Delta Lake destinations in `application.yml`:
 
 ```yaml
 connector:
   topics:
     user-events:
-      topic-name: user-events
-      schema-file: schemas/user-events-schema.json
+      kafka-topic: "user.events.v1"
+      schema-file: "schemas/user-events-schema.json"
       destination:
-        bucket: production-data-lake
-        prefix: events/user
-        table-name: user_events
-        partition-columns: ["year", "month", "day"]
+        bucket: "data-lake"
+        path: "events/user-events"
+        partition-columns: ["year", "month", "day", "event_type"]
+        table-name: "user_events"
+        delta-config:
+          enable-optimize: true
+          optimize-interval: 10
+          enable-schema-evolution: true
+          enable-vacuum: false
       processing:
-        batch-size: 2000
-        flush-interval: 30
-        max-retries: 5
+        batch-size: 1000
+        flush-interval: 60
+        max-retries: 3
 ```
 
-### Schema Files
+### Schema Definition
 
-Place JSON schemas in `src/main/resources/schemas/`:
+Define JSON schemas in `src/main/resources/schemas/`:
 
 ```json
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
+  "title": "User Events Schema", 
   "required": ["user_id", "event_type", "timestamp"],
   "properties": {
-    "user_id": {"type": "integer"},
-    "event_type": {"type": "string"},
+    "user_id": {"type": "string"},
+    "event_type": {"type": "string", "enum": ["click", "view", "signup"]},
     "timestamp": {"type": "string", "format": "date-time"},
-    "properties": {"type": "object"}
-  }
+    "page_url": {"type": "string", "format": "uri"},
+    "session_id": {"type": "string"},
+    "properties": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
 }
 ```
 
-## 🔄 Operations
+## 🔄 Delta Lake Features
 
-### Horizontal Scaling
+### ACID Transactions
 
-The connector supports horizontal scaling through Kafka Connect's distributed mode:
+Every write to Delta Lake is atomic, consistent, isolated, and durable:
 
 ```bash
-# Test horizontal scaling locally
-./scripts/test-horizontal-scaling.sh
-
-# Deploy multiple workers in Kubernetes
-kubectl scale deployment kafka-s3-connector --replicas=4 -n kafka-s3-connector
+# View transaction history
+docker exec minio mc cat minio/data-lake/events/user-events/_delta_log/00000000000000000000.json | jq .
 ```
 
-### Monitoring and Metrics
+### Schema Evolution  
 
-#### Available Endpoints
+The connector automatically handles schema changes:
 
-- **Health Check**: `/actuator/health`
-- **Metrics**: `/actuator/metrics`
-- **Prometheus**: `/actuator/prometheus`
-- **Custom Connector**: `/actuator/connector/metrics`
+```yaml
+delta-config:
+  enable-schema-evolution: true  # Allow new columns
+  enable-optimize: true          # Automatic optimization
+  checkpoint-interval: "10"      # Checkpoint every 10 commits
+```
 
-#### Key Metrics
+### Time-Based Partitioning
 
-| Metric | Type | Description |
-|--------|------|-------------|
-| `kafka_connector_records_processed_total` | Counter | Total records processed |
-| `kafka_connector_records_failed_total` | Counter | Total failed records |
-| `kafka_connector_s3_write_duration` | Timer | S3 write latency |
-| `kafka_connector_schema_validation_failures_total` | Counter | Schema validation failures |
+Optimize queries with intelligent partitioning:
 
-#### Grafana Dashboard
+```yaml
+partition-columns: ["year", "month", "day", "event_type"]
+```
 
-Import the provided Grafana dashboard (`monitoring/grafana-dashboard.json`) for comprehensive monitoring.
+This creates directory structure:
+```
+s3://data-lake/events/user-events/
+├── year=2024/month=01/day=15/event_type=view/
+├── year=2024/month=01/day=15/event_type=click/  
+└── year=2024/month=01/day=16/event_type=signup/
+```
 
-### Data Verification
+### Optimization & Maintenance
 
-Run comprehensive data integrity checks:
+```yaml
+delta-config:
+  enable-optimize: true         # Compact small files
+  optimize-interval: 10         # Optimize every 10 commits
+  enable-vacuum: true           # Clean old files
+  vacuum-retention-hours: 168   # Keep 7 days of history
+```
+
+## 📊 Monitoring & Operations
+
+### Health Checks
 
 ```bash
-# Set environment variable to enable data verification
-export RUN_DATA_VERIFICATION=true
+# Overall health
+curl http://localhost:8081/actuator/health
 
-# Run data verification tests
-mvn test -Dtest=S3DataVerificationTest
+# Detailed component health
+curl http://localhost:8081/actuator/health | jq '.components'
+```
 
-# Or use the verification script
-./scripts/verify-data-integrity.sh
+### Metrics
+
+| Metric | Description | Type |
+|--------|-------------|------|
+| `kafka_connector_records_processed_total` | Total records processed | Counter |
+| `kafka_connector_delta_writes_total` | Delta Lake writes | Counter |
+| `kafka_connector_batch_flush_duration` | Batch processing time | Timer |
+| `kafka_connector_schema_validation_failures` | Schema validation failures | Counter |
+| `kafka_connector_optimization_runs_total` | Table optimization runs | Counter |
+
+### Logging
+
+Structured JSON logging with correlation IDs:
+
+```json
+{
+  "timestamp": "2024-01-15T10:30:00.123Z",
+  "level": "INFO", 
+  "logger": "DeltaWriterService",
+  "correlationId": "abc-123-def",
+  "topic": "user.events.v1",
+  "message": "Successfully wrote batch to Delta Lake: user_events",
+  "batch_size": 1000,
+  "processing_time_ms": 250
+}
 ```
 
 ## 🧪 Testing
 
+### Unit Tests
+
+```bash
+# Run all unit tests
+mvn test
+
+# Run specific test class
+mvn test -Dtest=DeltaWriterServiceTest
+
+# Run with coverage
+mvn test jacoco:report
+```
+
 ### Integration Tests
 
 ```bash
-# Run all integration tests
+# Start test infrastructure
+docker-compose up -d
+
+# Run integration tests
 mvn test -Dtest="*IntegrationTest"
 
-# Run with local containers
-docker-compose up -d redpanda minio
-mvn test -Dspring.profiles.active=local
+# End-to-end pipeline test  
+mvn test -Dtest=EndToEndPipelineTest
 ```
 
 ### Load Testing
 
 ```bash
-# Generate test load
-./scripts/generate-test-load.sh 50000
+# Generate test data
+./scripts/generate-test-load.sh 10000
 
 # Monitor processing
-curl -s http://localhost:8081/actuator/connector/metrics | jq .
+watch -n 1 'curl -s http://localhost:8081/actuator/metrics/kafka.connector.records.processed.total | jq .'
 ```
 
-### Unit Tests
+## 🚀 Production Deployment
+
+### Docker
 
 ```bash
-# Run unit tests
-mvn test -Dtest="*Test" -Dtest="!*IntegrationTest"
+# Build Docker image
+docker build -t kafka-s3-delta-connector:1.0.0 .
 
-# With coverage
-mvn test jacoco:report
+# Run with production config
+docker run -d \
+  -e SPRING_PROFILES_ACTIVE=prod \
+  -e KAFKA_BOOTSTRAP_SERVERS=kafka1:9092,kafka2:9092 \
+  -e AWS_S3_BUCKET=production-data-lake \
+  kafka-s3-delta-connector:1.0.0
 ```
 
-## 📊 Performance Characteristics
+### Kubernetes
 
-### Throughput Benchmarks
+```bash
+# Deploy to staging
+kubectl apply -k k8s/overlays/staging
 
-| Configuration | Records/sec | Latency P99 | CPU Usage | Memory Usage |
-|---------------|-------------|-------------|-----------|--------------|
-| Single Worker | 5,000 | 250ms | 0.5 cores | 1GB |
-| 2 Workers | 15,000 | 180ms | 1.0 cores | 2GB |
-| 4 Workers | 35,000 | 120ms | 2.0 cores | 4GB |
+# Deploy to production  
+kubectl apply -k k8s/overlays/prod
 
-### Resource Requirements
+# Check deployment
+kubectl get pods -n kafka-s3-connector
+kubectl logs -f deployment/kafka-s3-connector -n kafka-s3-connector
+```
 
-| Environment | CPU Request | Memory Request | CPU Limit | Memory Limit |
-|-------------|-------------|----------------|-----------|--------------|
-| Development | 200m | 512Mi | 1000m | 2Gi |
-| Staging | 750m | 1.5Gi | 3000m | 6Gi |
-| Production | 1000m | 2Gi | 4000m | 8Gi |
+## 📈 Performance Tuning
+
+### Batch Configuration
+
+```yaml
+processing:
+  batch-size: 5000      # Records per batch
+  flush-interval: 30    # Max seconds before flush
+  max-retries: 3        # Retry attempts
+```
+
+### JVM Settings
+
+```bash
+export JAVA_OPTS="-Xmx4g -Xms2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+```
+
+### S3 Optimization
+
+```yaml
+aws:
+  s3:
+    path-style-access: true
+    multipart-threshold: 64MB
+    multipart-part-size: 32MB 
+    max-connections: 50
+```
 
 ## 🔧 Troubleshooting
 
 ### Common Issues
 
-#### Connection Failures
-```bash
-# Check Kafka connectivity
-kafka-console-consumer.sh --bootstrap-server localhost:9092 --list
-
-# Check S3 connectivity
-aws s3 ls s3://your-bucket-name/ --endpoint-url http://localhost:9000
-```
-
-#### Schema Validation Errors
+**Schema Validation Failures**
 ```bash
 # Check schema files
-ls -la src/main/resources/schemas/
+find src/main/resources/schemas/ -name "*.json" -exec cat {} \;
 
-# Validate JSON schema
-cat schemas/user-events-schema.json | jq .
+# Validate JSON schema syntax
+cat schemas/user-events-schema.json | jq empty
 ```
 
-#### Performance Issues
+**Delta Lake Write Errors** 
 ```bash
-# Check metrics
-curl http://localhost:8081/actuator/metrics/kafka.connector.s3.write.duration
+# Check S3 connectivity
+aws s3 ls s3://data-lake/ --endpoint-url http://localhost:9000
 
-# Review JVM settings
-curl http://localhost:8081/actuator/env | jq '.propertySources[] | select(.name == "systemEnvironment")'
+# Verify Delta transaction logs
+docker exec minio mc cat minio/data-lake/events/user-events/_delta_log/
 ```
 
-### Logs Analysis
+**Performance Issues**
+```bash
+# Monitor JVM memory
+curl http://localhost:8081/actuator/metrics/jvm.memory.used
+
+# Check batch processing metrics  
+curl http://localhost:8081/actuator/metrics/kafka.connector.batch.flush.duration
+```
+
+### Debug Mode
 
 ```bash
-# Follow application logs
-tail -f logs/kafka-s3-connector.log
+# Enable debug logging
+export LOGGING_LEVEL_COM_COMPANY_KAFKACONNECTOR=DEBUG
 
-# Check for specific patterns
-grep -i error logs/kafka-s3-connector.log
-grep "Circuit breaker" logs/kafka-s3-connector.log
+# View detailed processing logs
+tail -f logs/kafka-s3-connector.log | jq .
 ```
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch: `git checkout -b feature/delta-lake-enhancement` 
+3. Make your changes with tests
+4. Run the test suite: `mvn test`
+5. Commit with conventional commits: `git commit -m "feat: add Delta Lake optimization"`
+6. Push and create a Pull Request
 
 ### Development Guidelines
 
-- Follow SOLID principles and clean code practices
+- Follow [Conventional Commits](https://www.conventionalcommits.org/)
 - Write comprehensive tests (unit + integration)
-- Update documentation for new features
+- Update documentation for new features  
 - Ensure all CI checks pass
-- Use conventional commit messages
+- Add appropriate logging and metrics
 
 ## 📄 License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
-## 🏷️ Releases
+## 🏷️ Changelog
 
-- **v1.0.0** - Initial production release with horizontal scaling
-- **milestone-horizontal-scaling** - Development milestone
+### v1.0.0 (2024-01-15)
+- ✨ Initial production release
+- 🚀 Delta Lake integration with ACID transactions  
+- ⚡ High-performance batch processing
+- 📊 Schema evolution and complex nested object support
+- 🔍 Comprehensive monitoring and observability
+- 🐳 Kubernetes deployment with multi-environment support
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/company/kafka-s3-connector/issues)
-- **Documentation**: [Wiki](https://github.com/company/kafka-s3-connector/wiki)
-- **Discussions**: [GitHub Discussions](https://github.com/company/kafka-s3-connector/discussions)
+- **Issues**: [GitHub Issues](https://github.com/gauravsri/Kafka-s3-connector/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/gauravsri/Kafka-s3-connector/discussions)
+- **Documentation**: [Project Wiki](https://github.com/gauravsri/Kafka-s3-connector/wiki)
 
 ---
 
-**Built with ❤️ by the Data Engineering Team**
+**Built with ❤️ for the Data Engineering Community**
 
-*Enterprise Kafka Connect S3 Connector - Production Ready • Horizontally Scalable • Fully Monitored*
+*High-Performance Kafka-S3-Delta Connector • Production Ready • ACID Transactions • Schema Evolution*
