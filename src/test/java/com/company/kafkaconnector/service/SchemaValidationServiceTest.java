@@ -26,17 +26,13 @@ class SchemaValidationServiceTest {
     void shouldValidateValidUserEventMessage() throws Exception {
         // Given
         String schemaPath = "schemas/user-events-schema.json";
-        
+
         String validMessageJson = """
             {
-                "user_id": 123,
+                "user_id": "user_123",
                 "event_type": "login",
                 "timestamp": "2023-01-01T10:00:00Z",
-                "session_id": "session_123",
-                "properties": {
-                    "source": "web",
-                    "platform": "desktop"
-                }
+                "session_id": "session_abc"
             }
             """;
 
@@ -49,20 +45,22 @@ class SchemaValidationServiceTest {
     void shouldValidateValidOrderEventMessage() throws Exception {
         // Given
         String schemaPath = "schemas/order-events-schema.json";
-        
+
         String validMessageJson = """
             {
-                "order_id": "order_123",
-                "user_id": 456,
-                "amount": 99.99,
-                "currency": "USD",
-                "status": "completed",
-                "timestamp": "2023-01-01T10:00:00Z",
-                "items": [{
-                    "product_id": "prod_123",
-                    "quantity": 2,
-                    "price": 49.99
-                }]
+                "order_id": "order_xyz",
+                "customer_id": "cust_456",
+                "order_status": "created",
+                "timestamp": "2023-01-01T11:00:00Z",
+                "total_amount": 150.75,
+                "currency": "EUR",
+                "items": [
+                    {
+                        "product_id": "prod_abc",
+                        "quantity": 3,
+                        "unit_price": 50.25
+                    }
+                ]
             }
             """;
 
@@ -92,13 +90,12 @@ class SchemaValidationServiceTest {
     void shouldRejectMessageWithWrongDataType() {
         // Given
         String schemaPath = "schemas/user-events-schema.json";
-        
+
         String invalidMessageJson = """
             {
-                "user_id": "not_a_number",
-                "event_type": "login",
-                "timestamp": "2023-01-01T10:00:00Z",
-                "session_id": "session_123"
+                "user_id": 12345,
+                "event_type": "click",
+                "timestamp": "2023-01-01T12:00:00Z"
             }
             """;
 
@@ -122,23 +119,22 @@ class SchemaValidationServiceTest {
     void shouldCacheSchemaAfterFirstLoad() throws Exception {
         // Given
         String schemaPath = "schemas/user-events-schema.json";
-        
+
         String validMessageJson = """
             {
-                "user_id": 123,
+                "user_id": "user_123",
                 "event_type": "login",
                 "timestamp": "2023-01-01T10:00:00Z",
-                "session_id": "session_123"
+                "session_id": "session_abc"
             }
             """;
 
         // When - validate same message twice
-        boolean result1 = schemaValidationService.validateMessage(schemaPath, validMessageJson);
-        boolean result2 = schemaValidationService.validateMessage(schemaPath, validMessageJson);
+        schemaValidationService.validateMessage(schemaPath, validMessageJson);
+        schemaValidationService.validateMessage(schemaPath, validMessageJson);
 
-        // Then - both should succeed and schema should be cached
-        assertThat(result1).isTrue();
-        assertThat(result2).isTrue();
+        // Then - schema should be cached
+        assertThat(schemaValidationService.isSchemaCached(schemaPath)).isTrue();
         assertThat(schemaValidationService.getCachedSchemaCount()).isEqualTo(1);
     }
 
@@ -146,16 +142,16 @@ class SchemaValidationServiceTest {
     void shouldReloadSchemaWhenRequested() throws Exception {
         // Given
         String schemaPath = "schemas/user-events-schema.json";
-        String messageJson = "{\"user_id\": 123, \"event_type\": \"login\"}";
+        String messageJson = "{\"user_id\": \"user_123\", \"event_type\": \"login\", \"timestamp\": \"2023-01-01T10:00:00Z\"}";
 
         // When - load schema, then reload
         schemaValidationService.validateMessage(schemaPath, messageJson); // This loads and caches
-        assertThat(schemaValidationService.getCachedSchemaCount()).isEqualTo(1);
-        
+        assertThat(schemaValidationService.isSchemaCached(schemaPath)).isTrue();
+
         schemaValidationService.reloadSchema(schemaPath); // This removes from cache
-        
+
         // Then - schema should be removed from cache
-        assertThat(schemaValidationService.getCachedSchemaCount()).isEqualTo(0);
+        assertThat(schemaValidationService.isSchemaCached(schemaPath)).isFalse();
     }
 
     @Test

@@ -20,7 +20,7 @@ public class TopicPartitionStrategy implements PartitionStrategy {
     
     @Override
     public String getPartitionKey(SinkRecord record) {
-        return String.format("%s/kafka_partition=%d", record.topic(), record.kafkaPartition());
+        return String.format("%s/partition=%d", record.topic(), record.kafkaPartition());
     }
     
     @Override
