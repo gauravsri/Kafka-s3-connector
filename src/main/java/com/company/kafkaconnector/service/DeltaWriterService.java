@@ -20,16 +20,24 @@ public class DeltaWriterService {
     private static final Logger logger = LoggerFactory.getLogger(DeltaWriterService.class);
 
     private final DeltaKernelWriterService deltaKernelWriterService;
+    private final DeltaOptimizationService deltaOptimizationService;
     private final Map<String, List<Map<String, Object>>> messageBatches = new ConcurrentHashMap<>();
     private final Map<String, Integer> batchCounts = new ConcurrentHashMap<>();
+    private final Map<String, TopicConfig> destinationTopicConfigs = new ConcurrentHashMap<>();
 
-    public DeltaWriterService(DeltaKernelWriterService deltaKernelWriterService) {
+    public DeltaWriterService(DeltaKernelWriterService deltaKernelWriterService, 
+                             DeltaOptimizationService deltaOptimizationService) {
         this.deltaKernelWriterService = deltaKernelWriterService;
+        this.deltaOptimizationService = deltaOptimizationService;
     }
 
     public void writeMessage(Map<String, Object> transformedMessage, TopicConfig topicConfig) {
         try {
             String destinationKey = buildDestinationKey(topicConfig);
+            
+            // Store topic config for later use in flushAllBatches
+            destinationTopicConfigs.put(destinationKey, topicConfig);
+            
             addToBatch(destinationKey, transformedMessage);
 
             if (shouldFlushBatch(destinationKey, topicConfig)) {
@@ -62,6 +70,13 @@ public class DeltaWriterService {
 
         logger.info("Successfully wrote batch to Delta Lake: {}", destinationKey);
 
+        // Track batch for optimization and trigger optimizations if needed
+        String tablePath = String.format("s3a://%s/%s",
+                topicConfig.getDestination().getBucket(),
+                topicConfig.getDestination().getPath());
+        
+        deltaOptimizationService.trackBatchWrite(tablePath);
+        
         clearBatch(destinationKey);
         handleOptimizations(topicConfig);
     }
@@ -94,7 +109,12 @@ public class DeltaWriterService {
     }
 
     private void handleOptimizations(TopicConfig topicConfig) {
-        // Placeholder for optimize/vacuum
+        try {
+            deltaOptimizationService.performOptimizations(topicConfig);
+        } catch (Exception e) {
+            logger.warn("Error during optimization for topic {}: {}", 
+                topicConfig.getKafkaTopic(), e.getMessage(), e);
+        }
     }
 
     private String buildDestinationKey(TopicConfig topicConfig) {
@@ -117,7 +137,32 @@ public class DeltaWriterService {
     }
 
     public void flushAllBatches() {
-        // This needs to be implemented properly, it needs access to TopicConfig for each destinationKey
-        logger.warn("flushAllBatches is not fully implemented yet.");
+        logger.info("Flushing all pending batches...");
+        
+        int totalFlushed = 0;
+        int errors = 0;
+        
+        for (Map.Entry<String, List<Map<String, Object>>> entry : messageBatches.entrySet()) {
+            String destinationKey = entry.getKey();
+            List<Map<String, Object>> batch = entry.getValue();
+            TopicConfig topicConfig = destinationTopicConfigs.get(destinationKey);
+            
+            if (batch != null && !batch.isEmpty() && topicConfig != null) {
+                try {
+                    logger.info("Flushing batch for destination: {} ({} messages)", destinationKey, batch.size());
+                    flushBatch(destinationKey, topicConfig);
+                    totalFlushed += batch.size();
+                } catch (Exception e) {
+                    logger.error("Failed to flush batch for destination: {}", destinationKey, e);
+                    errors++;
+                }
+            }
+        }
+        
+        logger.info("Flush all batches completed: {} messages flushed, {} errors", totalFlushed, errors);
+        
+        if (errors > 0) {
+            logger.warn("Some batches failed to flush. Check logs for details.");
+        }
     }
 }

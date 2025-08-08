@@ -2,7 +2,8 @@ package com.company.kafkaconnector.integration;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -32,11 +33,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  * - Connector has processed some messages
  * - test-data-lake bucket exists with data
  */
-@Slf4j
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @Disabled("This test is for the old JSONL format. Use DeltaDataVerificationTest instead.")
 @EnabledIfEnvironmentVariable(named = "RUN_DATA_VERIFICATION", matches = "true")
 public class S3DataVerificationTest {
+    
+    private static final Logger log = LoggerFactory.getLogger(S3DataVerificationTest.class);
     
     private static final String BUCKET_NAME = "test-data-lake";
     private static final String MINIO_ENDPOINT = "http://localhost:9000";

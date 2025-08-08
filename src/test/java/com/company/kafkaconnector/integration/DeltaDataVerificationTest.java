@@ -8,17 +8,19 @@ import io.delta.kernel.data.FilteredColumnarBatch;
 import io.delta.kernel.defaults.engine.DefaultEngine;
 import io.delta.kernel.types.StructType;
 import io.delta.kernel.utils.CloseableIterator;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Slf4j
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @EnabledIfEnvironmentVariable(named = "RUN_DATA_VERIFICATION", matches = "true")
 public class DeltaDataVerificationTest {
+    
+    private static final Logger log = LoggerFactory.getLogger(DeltaDataVerificationTest.class);
 
     private static final String BUCKET_NAME = "test-data-lake";
     private static final String MINIO_ENDPOINT = "http://localhost:9000";
