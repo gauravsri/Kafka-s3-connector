@@ -20,7 +20,10 @@ public class TopicConfig {
     private ProcessingConfig processing;
 
     // Constructors
-    public TopicConfig() {}
+    public TopicConfig() {
+        this.destination = new DestinationConfig();
+        this.processing = new ProcessingConfig();
+    }
 
     public TopicConfig(String kafkaTopic, String schemaFile, DestinationConfig destination, ProcessingConfig processing) {
         this.kafkaTopic = kafkaTopic;

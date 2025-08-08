@@ -2,11 +2,7 @@ package com.company.kafkaconnector.service;
 
 import com.company.kafkaconnector.exception.DeltaWriteException;
 import com.company.kafkaconnector.model.TopicConfig;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SaveMode;
-import org.apache.spark.sql.SparkSession;
+import io.delta.kernel.types.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -23,14 +19,12 @@ public class DeltaWriterService {
 
     private static final Logger logger = LoggerFactory.getLogger(DeltaWriterService.class);
 
-    private final SparkSession sparkSession;
-    private final ObjectMapper objectMapper;
+    private final DeltaKernelWriterService deltaKernelWriterService;
     private final Map<String, List<Map<String, Object>>> messageBatches = new ConcurrentHashMap<>();
     private final Map<String, Integer> batchCounts = new ConcurrentHashMap<>();
 
-    public DeltaWriterService(SparkSession sparkSession, ObjectMapper objectMapper) {
-        this.sparkSession = sparkSession;
-        this.objectMapper = objectMapper;
+    public DeltaWriterService(DeltaKernelWriterService deltaKernelWriterService) {
+        this.deltaKernelWriterService = deltaKernelWriterService;
     }
 
     public void writeMessage(Map<String, Object> transformedMessage, TopicConfig topicConfig) {
@@ -63,29 +57,43 @@ public class DeltaWriterService {
 
         logger.info("Flushing batch of {} messages for destination: {}", batch.size(), destinationKey);
 
-        String s3Path = String.format("s3a://%s/%s",
-                topicConfig.getDestination().getBucket(),
-                topicConfig.getDestination().getPath());
+        StructType schema = createSchema(batch.get(0));
+        deltaKernelWriterService.write(topicConfig, batch, schema);
 
-        String jsonRecords = objectMapper.writeValueAsString(batch);
-        Dataset<Row> df = sparkSession.read().json(sparkSession.createDataset(
-                List.of(jsonRecords),
-                org.apache.spark.sql.Encoders.STRING()));
-
-        df.write()
-                .format("delta")
-                .mode(SaveMode.Append)
-                .option("mergeSchema", "true")
-                .partitionBy(topicConfig.getDestination().getPartitionColumns())
-                .save(s3Path);
-
-        logger.info("Successfully wrote batch to Delta Lake: {}", s3Path);
+        logger.info("Successfully wrote batch to Delta Lake: {}", destinationKey);
 
         clearBatch(destinationKey);
-        handleOptimizations(s3Path, topicConfig);
+        handleOptimizations(topicConfig);
     }
 
-    private void handleOptimizations(String s3Path, TopicConfig topicConfig) {
+    private StructType createSchema(Map<String, Object> message) {
+        StructType schema = new StructType();
+        for (Map.Entry<String, Object> entry : message.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            DataType dataType = getDataType(value);
+            schema = schema.add(key, dataType);
+        }
+        return schema;
+    }
+
+    private DataType getDataType(Object value) {
+        if (value instanceof String) {
+            return StringType.STRING;
+        } else if (value instanceof Integer) {
+            return IntegerType.INTEGER;
+        } else if (value instanceof Long) {
+            return LongType.LONG;
+        } else if (value instanceof Double) {
+            return DoubleType.DOUBLE;
+        } else if (value instanceof Boolean) {
+            return BooleanType.BOOLEAN;
+        } else {
+            throw new UnsupportedOperationException("Unsupported data type: " + value.getClass().getName());
+        }
+    }
+
+    private void handleOptimizations(TopicConfig topicConfig) {
         // Placeholder for optimize/vacuum
     }
 

@@ -21,9 +21,8 @@
     <properties>
         <java.version>17</java.version>
         <scala.binary.version>2.12</scala.binary.version>
-        <delta.version>2.4.0</delta.version>
+        <delta-kernel.version>4.0.0</delta-kernel.version>
         <hadoop.version>3.3.6</hadoop.version>
-        <spark.version>3.5.0</spark.version>
         <testcontainers.version>1.19.3</testcontainers.version>
     </properties>
 
@@ -77,44 +76,26 @@
             <artifactId>spring-kafka</artifactId>
         </dependency>
 
-        <!-- Delta Lake and Spark Dependencies -->
+        <!-- Delta Lake Dependencies -->
         <dependency>
             <groupId>io.delta</groupId>
-            <artifactId>delta-core_${scala.binary.version}</artifactId>
-            <version>${delta.version}</version>
+            <artifactId>delta-kernel-api</artifactId>
+            <version>${delta-kernel.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_${scala.binary.version}</artifactId>
-            <version>${spark.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>io.delta</groupId>
+            <artifactId>delta-kernel-defaults</artifactId>
+            <version>${delta-kernel.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client-runtime</artifactId>
             <version>${hadoop.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client-api</artifactId>
             <version>${hadoop.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <!-- AWS SDK Dependencies -->

@@ -134,4 +134,8 @@ public class SchemaValidationService {
     public int getCachedSchemaCount() {
         return schemaCache.size();
     }
+
+    public boolean isSchemaCached(String schemaPath) {
+        return schemaCache.containsKey(schemaPath);
+    }
 }
