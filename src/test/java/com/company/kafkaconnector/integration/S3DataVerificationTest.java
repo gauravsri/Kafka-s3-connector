@@ -34,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @Slf4j
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@Disabled("This test is for the old JSONL format. Use DeltaDataVerificationTest instead.")
 @EnabledIfEnvironmentVariable(named = "RUN_DATA_VERIFICATION", matches = "true")
 public class S3DataVerificationTest {
     

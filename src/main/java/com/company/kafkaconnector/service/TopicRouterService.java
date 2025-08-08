@@ -25,7 +25,7 @@ public class TopicRouterService {
     private final ConnectorConfiguration connectorConfiguration;
     private final SchemaValidationService schemaValidationService;
     private final MessageTransformationService messageTransformationService;
-    private final S3WriterService s3WriterService;
+    private final DeltaWriterService deltaWriterService;
     private final RetryService retryService;
     private final CircuitBreakerService circuitBreakerService;
     private final DeadLetterQueueService deadLetterQueueService;
@@ -38,14 +38,14 @@ public class TopicRouterService {
             ConnectorConfiguration connectorConfiguration,
             SchemaValidationService schemaValidationService,
             MessageTransformationService messageTransformationService,
-            S3WriterService s3WriterService,
+            DeltaWriterService deltaWriterService,
             RetryService retryService,
             CircuitBreakerService circuitBreakerService,
             DeadLetterQueueService deadLetterQueueService) {
         this.connectorConfiguration = connectorConfiguration;
         this.schemaValidationService = schemaValidationService;
         this.messageTransformationService = messageTransformationService;
-        this.s3WriterService = s3WriterService;
+        this.deltaWriterService = deltaWriterService;
         this.retryService = retryService;
         this.circuitBreakerService = circuitBreakerService;
         this.deadLetterQueueService = deadLetterQueueService;
@@ -116,15 +116,10 @@ public class TopicRouterService {
         );
 
         // Write to S3
-        boolean writeSuccess = s3WriterService.writeMessage(transformedMessage, topicConfig);
+        deltaWriterService.writeMessage(transformedMessage, topicConfig);
         
-        if (writeSuccess) {
-            updateTopicStats(topicName, true);
-            return createSuccessResult(topicName);
-        } else {
-            updateTopicStats(topicName, false);
-            throw new RuntimeException("Failed to write to S3");
-        }
+        updateTopicStats(topicName, true);
+        return createSuccessResult(topicName);
     }
 
     private TopicConfig findTopicConfig(String topicName) {
