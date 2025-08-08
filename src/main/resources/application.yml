@@ -26,9 +26,6 @@ aws:
     access-key-id: minioadmin
     secret-access-key: minioadmin
 
-# TODO: Add Delta Lake Configuration later
-# For now, using simple S3 storage
-
 # Multi-Topic Connector Configuration
 connector:
   topics:
