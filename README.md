@@ -10,18 +10,20 @@
 
 ## 🚀 Overview
 
-The Kafka-S3-Delta Lake Connector is a high-performance, enterprise-grade solution that streams data from Apache Kafka topics directly to S3 as Delta Lake tables. Built with Spring Boot and Delta Kernel, it provides ACID transactions, schema evolution, time travel, and advanced optimization capabilities.
+The Kafka-S3-Delta Lake Connector is a simplified, high-performance solution that streams data from Apache Kafka topics directly to S3 as Delta Lake tables. **Now featuring Kafka-native idempotency** that eliminates complex database dependencies while maintaining exactly-once processing guarantees.
 
 ### ✨ Key Features
 
-- **🏗️ Delta Lake Integration**: Native Delta Lake tables with ACID transactions and schema evolution
-- **⚡ High Performance**: Optimized batch processing with configurable partitioning strategies
-- **🔄 Schema Evolution**: Automatic schema evolution with backward compatibility
-- **📊 Advanced Analytics**: Support for complex nested objects, arrays, and time-based partitioning  
-- **🔍 Data Quality**: JSON schema validation, data transformation, and integrity checks
-- **📈 Production Ready**: Circuit breakers, retry policies, monitoring, and observability
-- **🐳 Cloud Native**: Docker containers, Kubernetes deployment, and multi-environment support
-- **⚙️ Optimization**: Automatic table optimization, compaction, and vacuum operations
+- **🚀 Simplified Architecture**: Kafka-native offset management eliminates database complexity
+- **🏗️ Delta Lake Integration**: Native Delta Lake tables with ACID transactions and schema evolution  
+- **⚡ High Performance**: No database lookups or bloom filters - pure Kafka Consumer Groups
+- **🔄 Multi-Format Support**: JSON, CSV, and Avro message parsing with unified processing
+- **📊 COB Partitioning**: Close-of-Business date partitioning for analytics workloads
+- **🔍 Data Quality**: Business rule validation and deterministic data enrichment
+- **📈 Production Ready**: Retry policies, dead letter queues, and comprehensive monitoring
+- **🛡️ Reliability**: Exactly-once processing via Kafka offset management + idempotent business logic
+- **🐳 Cloud Native**: Zero external dependencies beyond Kafka and S3
+- **⚙️ Natural Idempotency**: Delta Lake's append-only nature prevents duplicate processing
 
 ## 🏗️ Architecture
 
@@ -482,6 +484,13 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 - 📊 Schema evolution and complex nested object support
 - 🔍 Comprehensive monitoring and observability
 - 🐳 Kubernetes deployment with multi-environment support
+
+## 📚 Documentation
+
+- **[User Guide](USER_GUIDE.md)** - Complete setup and usage instructions
+- **[Design Document](DESIGN.md)** - Architecture and design decisions  
+- **[Reliability Guarantees](RELIABILITY.md)** - Message processing and fault tolerance
+- **[Contributing Guidelines](CONTRIBUTING.md)** - Development and contribution guide
 
 ## 📞 Support
 

@@ -1,5 +1,6 @@
 package com.company.kafkaconnector.service;
 
+import com.company.kafkaconnector.exception.NonRetriableException;
 import com.company.kafkaconnector.exception.SchemaValidationException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,7 +41,7 @@ public class SchemaValidationService {
             
             if (!report.isSuccess()) {
                 logger.warn("Schema validation failed for schema: {}. Report: {}", schemaFile, report);
-                return false;
+                throw NonRetriableException.schemaValidationFailed("Schema validation failed for " + schemaFile + ": " + report.toString());
             }
             
             logger.debug("Schema validation successful for schema: {}", schemaFile);
@@ -48,12 +49,7 @@ public class SchemaValidationService {
             
         } catch (IOException e) {
             logger.error("Error parsing JSON message for schema validation: {}", e.getMessage());
-            throw new SchemaValidationException(
-                "Invalid JSON format", 
-                schemaFile, 
-                jsonMessage, 
-                e
-            );
+            throw NonRetriableException.malformedMessage("Invalid JSON format for schema " + schemaFile, e);
         } catch (ProcessingException e) {
             logger.error("Error validating message against schema {}: {}", schemaFile, e.getMessage());
             throw new SchemaValidationException(

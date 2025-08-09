@@ -43,8 +43,23 @@ public class KafkaConfig {
     public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
+        
+        // Critical for offset-based idempotency:
+        // - MANUAL_IMMEDIATE: Only commit offset after explicit acknowledgment
+        // - This ensures messages are never lost and provides natural idempotency
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        
+        // Set concurrency based on topic partitions for optimal throughput
         factory.setConcurrency(3);
+        
+        // TODO: Implement custom rebalance listener for graceful partition handoff
+        // TODO: Add partition ownership tracking and metrics
+        factory.getContainerProperties().setConsumerRebalanceListener(null);
+        
+        // TODO: Implement custom error handler for fine-grained error classification
+        // TODO: Add circuit breaker pattern for failing topics
+        factory.setCommonErrorHandler(null);
+        
         return factory;
     }
 

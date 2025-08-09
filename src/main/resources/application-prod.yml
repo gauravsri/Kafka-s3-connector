@@ -1,5 +1,8 @@
-# Production configuration with AWS S3 and Kafka/MSK
+# Production configuration with AWS S3, Kafka/MSK - Simplified Kafka-Native Approach
 spring:
+  profiles:
+    active: prod
+    
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:your-kafka-cluster.amazonaws.com:9092}
     consumer:
@@ -14,6 +17,18 @@ spring:
             callback:
               handler:
                 class: software.amazon.msk.auth.iam.IAMClientCallbackHandler
+
+# Production Schema Registry Configuration
+schema:
+  registry:
+    url: ${SCHEMA_REGISTRY_URL:http://schema-registry:8081}
+
+# Kafka-Native Idempotency (Production)
+kafka-native:
+  idempotency:
+    enabled: true
+    # Kafka Consumer Groups with manual acknowledgment provide natural idempotency
+    # No additional infrastructure needed
 
 # AWS S3 Configuration for Production
 aws:

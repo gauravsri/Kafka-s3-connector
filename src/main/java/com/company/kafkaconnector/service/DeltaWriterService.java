@@ -1,6 +1,7 @@
 package com.company.kafkaconnector.service;
 
 import com.company.kafkaconnector.exception.DeltaWriteException;
+import com.company.kafkaconnector.exception.RetriableException;
 import com.company.kafkaconnector.model.TopicConfig;
 import io.delta.kernel.types.*;
 import org.slf4j.Logger;
@@ -46,14 +47,20 @@ public class DeltaWriterService {
         } catch (Exception e) {
             logger.error("Error writing message to Delta Lake for topic {}: {}",
                     topicConfig.getKafkaTopic(), e.getMessage(), e);
-            throw new DeltaWriteException(
-                    "Failed to write message to Delta Lake",
-                    topicConfig.getKafkaTopic(),
-                    UUID.randomUUID().toString(),
-                    topicConfig.getDestination().getFullPath(),
-                    1,
-                    e
-            );
+            
+            // Check if this is a retriable error (network, S3, or transient Delta issues)
+            if (isRetriableError(e)) {
+                throw RetriableException.serviceUnavailable("Delta Lake write operation", e);
+            } else {
+                throw new DeltaWriteException(
+                        "Failed to write message to Delta Lake",
+                        topicConfig.getKafkaTopic(),
+                        UUID.randomUUID().toString(),
+                        topicConfig.getDestination().getFullPath(),
+                        1,
+                        e
+                );
+            }
         }
     }
 
@@ -194,5 +201,54 @@ public class DeltaWriterService {
         if (errors > 0) {
             logger.warn("Some batches failed to flush. Check logs for details.");
         }
+    }
+    
+    /**
+     * Determines if an error is retriable based on the exception type and message.
+     * Retriable errors include network issues, S3 throttling, transient Delta Lake issues, etc.
+     */
+    private boolean isRetriableError(Exception e) {
+        String exceptionName = e.getClass().getSimpleName();
+        String message = e.getMessage();
+        
+        // Network and I/O related issues
+        if (exceptionName.contains("Connect") || 
+            exceptionName.contains("Timeout") || 
+            exceptionName.contains("IO")) {
+            return true;
+        }
+        
+        // S3/AWS specific retriable errors
+        if (exceptionName.contains("ServiceException") || 
+            exceptionName.contains("ThrottlingException") ||
+            exceptionName.contains("InternalServerError") || 
+            exceptionName.contains("ServiceUnavailableException") ||
+            exceptionName.contains("SlowDown")) {
+            return true;
+        }
+        
+        // Delta Lake specific retriable errors  
+        if (exceptionName.contains("ConcurrentModificationException") ||
+            exceptionName.contains("FileNotFoundException") ||
+            exceptionName.contains("PartialWriteException")) {
+            return true;
+        }
+        
+        // Check message content for retriable indicators
+        if (message != null) {
+            String lowerMessage = message.toLowerCase();
+            if (lowerMessage.contains("timeout") ||
+                lowerMessage.contains("connection") ||
+                lowerMessage.contains("unavailable") ||
+                lowerMessage.contains("throttl") ||
+                lowerMessage.contains("rate limit") ||
+                lowerMessage.contains("too many requests") ||
+                lowerMessage.contains("service temporarily") ||
+                lowerMessage.contains("try again")) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 }

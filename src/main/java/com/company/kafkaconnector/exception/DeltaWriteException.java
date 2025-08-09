@@ -37,4 +37,26 @@ public class DeltaWriteException extends ConnectorException {
     public int getBatchSize() {
         return batchSize;
     }
+    
+    public boolean isRetriable() {
+        String message = getMessage() != null ? getMessage().toLowerCase() : "";
+        
+        // Network/timeout errors are usually retriable
+        if (message.contains("timeout") || message.contains("connection") || message.contains("network")) {
+            return true;
+        }
+        
+        // S3 throttling is retriable
+        if (message.contains("throttle") || message.contains("rate limit")) {
+            return true;
+        }
+        
+        // Schema validation errors are usually not retriable
+        if (message.contains("schema") || message.contains("validation")) {
+            return false;
+        }
+        
+        // Default to retriable for unknown errors
+        return true;
+    }
 }

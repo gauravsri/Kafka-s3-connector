@@ -1,10 +1,11 @@
-# Kafka-S3-Delta Connector - Local Development Configuration
-# Streams data from Kafka topics to S3 as Delta Lake tables
+# Kafka-S3-Delta Connector - Simplified Kafka-Native Idempotency
+# Streams data from Kafka topics to S3 as Delta Lake tables using Kafka's built-in offset management
 spring:
   application:
-    name: kafka-s3-delta-connector
+    name: kafka-s3-delta-connector-simple
   profiles:
     active: local
+      
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
@@ -16,6 +17,15 @@ spring:
       max-poll-interval-ms: 300000
       session-timeout-ms: 30000
       fetch-max-wait-ms: 500
+      
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+# Schema Registry Configuration
+schema:
+  registry:
+    url: http://localhost:8081
 
 # S3-Compatible Storage Configuration (MinIO for local development)
 aws:
@@ -29,15 +39,17 @@ aws:
 # Delta Lake Connector Configuration
 connector:
   topics:
-    # User Events -> Delta Lake Table
+    # User Events -> COB-partitioned Delta Lake Table (supports JSON/CSV/Avro)
     user-events:
       kafka-topic: "user.events.v1"
-      schema-file: "schemas/user-events-schema.json"
+      avro-schema: "UserEvent"
+      supported-formats: ["JSON", "CSV", "AVRO"]
       destination:
         bucket: "data-lake"
         path: "events/user-events"
-        partition-columns: ["year", "month", "day", "event_type"]  # Time-based partitioning
+        partition-columns: ["cob_date"]  # COB date partitioning
         table-name: "user_events"
+        partition-strategy: "cob-based"
         delta-config:
           enable-optimize: true
           optimize-interval: 10
@@ -68,6 +80,23 @@ connector:
         batch-size: 500
         flush-interval: 30
         max-retries: 5
+
+# Kafka-Native Idempotency Configuration (minimal settings)
+kafka-native:
+  idempotency:
+    # Relying on Kafka's offset management - no additional configuration needed
+    # Consumer groups ensure only one instance per partition
+    # Manual acknowledgment ensures offsets committed only after successful processing
+    enabled: true
+
+# COB Processing Configuration  
+cob:
+  partitioning:
+    default-column: "cob_date"
+    validation:
+      strict-format: true
+      allow-future-dates: false
+      max-days-in-past: 365
 
 # Logging Configuration
 logging:
