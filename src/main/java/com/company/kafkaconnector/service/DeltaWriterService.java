@@ -211,11 +211,23 @@ public class DeltaWriterService {
         String exceptionName = e.getClass().getSimpleName();
         String message = e.getMessage();
         
-        // Network and I/O related issues
+        // Network and specific I/O related issues
         if (exceptionName.contains("Connect") || 
-            exceptionName.contains("Timeout") || 
-            exceptionName.contains("IO")) {
+            exceptionName.contains("Timeout")) {
             return true;
+        }
+        
+        // Only treat IOException as retriable if it has specific retriable indicators
+        if (exceptionName.contains("IO") && message != null) {
+            String lowerMessage = message.toLowerCase();
+            if (lowerMessage.contains("connection") ||
+                lowerMessage.contains("timeout") ||
+                lowerMessage.contains("network") ||
+                lowerMessage.contains("unavailable") ||
+                lowerMessage.contains("refused") ||
+                lowerMessage.contains("reset")) {
+                return true;
+            }
         }
         
         // S3/AWS specific retriable errors

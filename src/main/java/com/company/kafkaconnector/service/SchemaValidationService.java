@@ -41,7 +41,13 @@ public class SchemaValidationService {
             
             if (!report.isSuccess()) {
                 logger.warn("Schema validation failed for schema: {}. Report: {}", schemaFile, report);
-                throw NonRetriableException.schemaValidationFailed("Schema validation failed for " + schemaFile + ": " + report.toString());
+                // Schema validation failures are business logic errors, not malformed data
+                throw new SchemaValidationException(
+                    "Schema validation failed", 
+                    schemaFile, 
+                    jsonMessage, 
+                    new RuntimeException(report.toString())
+                );
             }
             
             logger.debug("Schema validation successful for schema: {}", schemaFile);
@@ -49,15 +55,20 @@ public class SchemaValidationService {
             
         } catch (IOException e) {
             logger.error("Error parsing JSON message for schema validation: {}", e.getMessage());
+            // JSON parsing errors are malformed data - cannot be retried
             throw NonRetriableException.malformedMessage("Invalid JSON format for schema " + schemaFile, e);
         } catch (ProcessingException e) {
             logger.error("Error validating message against schema {}: {}", schemaFile, e.getMessage());
+            // Processing exceptions are schema-related issues
             throw new SchemaValidationException(
                 "Schema validation processing error", 
                 schemaFile, 
                 jsonMessage, 
                 e
             );
+        } catch (SchemaValidationException e) {
+            // Re-throw our own exception type
+            throw e;
         }
     }
 

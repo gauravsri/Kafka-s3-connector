@@ -1,5 +1,6 @@
 package com.company.kafkaconnector.service;
 
+import com.company.kafkaconnector.exception.NonRetriableException;
 import com.company.kafkaconnector.exception.SchemaValidationException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -81,9 +82,11 @@ class SchemaValidationServiceTest {
             }
             """;
 
-        // When & Then - should return false for invalid message
-        boolean result = schemaValidationService.validateMessage(schemaPath, invalidMessageJson);
-        assertThat(result).isFalse();
+        // When & Then - should throw SchemaValidationException for missing required field
+        assertThatThrownBy(() -> 
+                schemaValidationService.validateMessage(schemaPath, invalidMessageJson))
+                .isInstanceOf(SchemaValidationException.class)
+                .hasMessageContaining("Schema validation failed");
     }
 
     @Test
@@ -99,9 +102,11 @@ class SchemaValidationServiceTest {
             }
             """;
 
-        // When & Then - should return false for invalid data type
-        boolean result = schemaValidationService.validateMessage(schemaPath, invalidMessageJson);
-        assertThat(result).isFalse();
+        // When & Then - should throw SchemaValidationException for wrong data type
+        assertThatThrownBy(() -> 
+                schemaValidationService.validateMessage(schemaPath, invalidMessageJson))
+                .isInstanceOf(SchemaValidationException.class)
+                .hasMessageContaining("Schema validation failed");
     }
 
     @Test
@@ -160,10 +165,10 @@ class SchemaValidationServiceTest {
         String schemaPath = "schemas/user-events-schema.json";
         String invalidJson = "{ invalid json }";
 
-        // When & Then
+        // When & Then - Invalid JSON should throw NonRetriableException (cannot be retried)
         assertThatThrownBy(() -> 
                 schemaValidationService.validateMessage(schemaPath, invalidJson))
-                .isInstanceOf(SchemaValidationException.class)
+                .isInstanceOf(NonRetriableException.class)
                 .hasMessageContaining("Invalid JSON format");
     }
     
@@ -172,11 +177,23 @@ class SchemaValidationServiceTest {
         // Given
         String schemaPath1 = "schemas/user-events-schema.json";
         String schemaPath2 = "schemas/order-events-schema.json";
-        String messageJson = "{\"test\": \"value\"}";
+        // Use valid messages that will pass schema validation, or catch the expected exceptions
+        String validUserEventJson = "{\"user_id\":\"user123\",\"event_type\":\"click\",\"timestamp\":\"2024-08-08T10:00:00Z\"}";
+        String validOrderEventJson = "{\"order_id\":\"order123\",\"customer_id\":\"customer456\",\"status\":\"pending\",\"amount\":99.99,\"timestamp\":\"2024-08-08T10:00:00Z\"}";
         
-        // When - load multiple schemas
-        schemaValidationService.validateMessage(schemaPath1, messageJson);
-        schemaValidationService.validateMessage(schemaPath2, messageJson);
+        // When - load multiple schemas (will attempt validation but we just want to test caching)
+        try {
+            schemaValidationService.validateMessage(schemaPath1, validUserEventJson);
+        } catch (SchemaValidationException e) {
+            // Schema loaded, validation may fail but that's expected for this cache test
+        }
+        
+        try {
+            schemaValidationService.validateMessage(schemaPath2, validOrderEventJson);
+        } catch (SchemaValidationException e) {
+            // Schema loaded, validation may fail but that's expected for this cache test
+        }
+        
         assertThat(schemaValidationService.getCachedSchemaCount()).isEqualTo(2);
         
         schemaValidationService.clearSchemaCache();
