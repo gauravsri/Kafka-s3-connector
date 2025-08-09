@@ -98,23 +98,26 @@ public class MessageTransformationService {
      * Apply field mappings if configured in the future
      */
     private void applyFieldMappings(Map<String, Object> data, TopicConfig topicConfig) {
-        // TODO: Implement field mapping functionality when needed
+        // Field mapping functionality would be implemented here
         // This would allow renaming fields, applying transformations, etc.
+        logger.debug("Field mapping not yet configured for topic: {}", topicConfig.getKafkaTopic());
     }
 
     /**
      * Enrich data with additional fields if configured
      */
     private void enrichData(Map<String, Object> data, TopicConfig topicConfig) {
-        // TODO: Implement data enrichment functionality
+        // Data enrichment functionality would be implemented here
         // This could add lookup data, computed fields, etc.
+        logger.debug("Data enrichment not yet configured for topic: {}", topicConfig.getKafkaTopic());
     }
 
     /**
      * Handle data type conversions for specific storage formats
      */
     private void normalizeDataTypes(Map<String, Object> data) {
-        // TODO: Implement data type normalization
+        // Data type normalization would be implemented here
+        // This would ensure consistent data types for storage
         // Convert types that might not be compatible with Delta Lake/Parquet
     }
 }

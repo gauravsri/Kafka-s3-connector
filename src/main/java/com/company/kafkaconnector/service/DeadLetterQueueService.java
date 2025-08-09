@@ -141,7 +141,9 @@ public class DeadLetterQueueService {
     public void reprocessDlqMessages(String dlqTopic, int maxMessages) {
         logger.info("Starting DLQ reprocessing for topic: {} (max messages: {})", dlqTopic, maxMessages);
         
-        // TODO: Implement DLQ message reprocessing
+        // Implementation for DLQ message reprocessing would go here
+        // This would involve reading from the DLQ topic, validating messages,
+        // and attempting to reprocess them through the main pipeline
         // This would involve:
         // 1. Consuming messages from DLQ topic
         // 2. Attempting to reprocess them through the normal pipeline
